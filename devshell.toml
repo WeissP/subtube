@@ -1,0 +1,11 @@
+[[env]]
+name = "HOOGLE_PORT"
+value = "9800"
+
+[[commands]]
+name = "doc"
+command = '''
+echo http://127.0.0.1:$HOOGLE_PORT
+hoogle serve -p $HOOGLE_PORT --local
+          '''
+help = "run hoogle server locally for documentation"
