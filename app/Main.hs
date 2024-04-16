@@ -1,4 +1,5 @@
+import AppServer (runServer)
 import MyPrelude
 
 main :: IO ()
-main = runSimpleApp $ logInfo "Hello World!"
+main = runSimpleApp $ liftIO runServer

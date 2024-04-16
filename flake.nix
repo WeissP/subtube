@@ -1,63 +1,77 @@
 {
-  description = "subtube";
-
+  description = "A very basic flake";
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/release-23.11";
+    haskellNix.url = "github:input-output-hk/haskell.nix";
+    nixpkgs.follows = "haskellNix/nixpkgs-unstable";
+    sqitchNix.url =
+      "github:NixOS/nixpkgs/46a1cd0c97578127286ee672ee1d85e30a18e847";
     flake-utils.url = "github:numtide/flake-utils";
     devshell.url = "github:numtide/devshell";
+    # coddRepo.url = "github:mzabani/codd";
   };
 
-  outputs = inputs@{ self, flake-utils, devshell, nixpkgs, ... }:
-    let
-      overlay = final: prev: {
-        haskell = prev.haskell // {
-          packageOverrides = hfinal: hprev:
-            prev.haskell.packageOverrides hfinal hprev // {
-              subtube = hfinal.callCabal2nix "subtube" ./. { };
+  nixConfig = {
+    extra-substituters = [ "https://cache.iog.io" ];
+    extra-trusted-public-keys =
+      [ "hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=" ];
+  };
+
+  outputs = inputs@{ self, flake-utils, haskellNix, devshell, nixpkgs, ... }:
+    flake-utils.lib.eachSystem [ "x86_64-linux" "x86_64-darwin" ] (system:
+      let
+        overlays = [
+          haskellNix.overlay
+          (final: prev: {
+            # This overlay adds our project to pkgs
+            subtube = final.haskell-nix.project' {
+              src = ./.;
+              compiler-nix-name = "ghc948";
             };
+          })
+          devshell.overlays.default
+        ];
+        sqitchPkgs = import inputs.sqitchNix { inherit system; };
+        pkgs = import nixpkgs {
+          inherit system overlays;
+          inherit (haskellNix) config;
         };
-        subtube = final.haskellPackages.subtube;
-      };
-      perSystem = system:
-        let
-          pkgs = import nixpkgs {
-            inherit system;
-            overlays = [ overlay devshell.overlays.default ];
-          };
-          ghcVersion = "ghc948";
-          hspkgs = pkgs.haskell.packages.${ghcVersion};
-          devShells.shellFor = hspkgs.shellFor {
-            packages = p: [ p.subtube ];
+        flake = pkgs.subtube.flake {
+          # This adds support for `nix build .#js-unknown-ghcjs:hello:exe:hello`
+          # crossPlatforms = p: [p.ghcjs];
+        };
+        shellWithToml = tomls:
+          pkgs.subtube.shellFor {
+            exactDeps = false;
             withHoogle = true;
-          };
-        in {
-          devShells.default = pkgs.devshell.mkShell {
-            name = "subtube";
-            imports = [ (pkgs.devshell.importTOML ./devshell.toml) ];
-            packagesFrom = [ devShells.shellFor ];
-            commands = [
-              (let cabal = pkgs.cabal-install;
-              in {
-                name = cabal.pname;
-                help = cabal.meta.description;
-                package = cabal;
-                category = "tools";
-              })
-              (let hls = hspkgs.haskell-language-server;
-              in {
-                name = hls.pname;
-                help = hls.meta.description;
-                package = hls;
-                category = "tools";
+            inputsFrom = [
+              (pkgs.devshell.mkShell {
+                name = "subtube";
+                imports = map pkgs.devshell.importTOML
+                  ([ ./env_config/common.toml ] ++ tomls);
+                commands = [{
+                  name = "sqitch";
+                  package = sqitchPkgs.sqitchPg;
+                  category = "DB";
+                }];
               })
             ];
-            packages = [ hspkgs.hlint hspkgs.fourmolu hspkgs.cabal-fmt ];
+            tools = {
+              cabal = "latest";
+              fourmolu = "latest";
+              hlint = "latest";
+              cabal-fmt = "latest";
+              ghcid = "latest";
+              haskell-language-server = "latest";
+            };
           };
-          packages = rec {
-            default = subtube;
-            subtube = pkgs.subtube;
-          };
+      in flake // {
+        # Built by `nix build .`
+        packages.default = flake.packages."subtube:exe:subtube-api-server";
+        packages.test = flake.packages."subtube:test:subtube-test";
+        devShells = {
+          default = shellWithToml [ ];
+          frontend = shellWithToml [ ./env_config/frontend.toml ];
+          backend = shellWithToml [ ./env_config/backend.toml ];
         };
-    in { inherit overlay; } // flake-utils.lib.eachDefaultSystem perSystem;
-
+      });
 }

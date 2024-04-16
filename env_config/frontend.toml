@@ -1,0 +1,21 @@
+[[env]]
+name = "API_SPEC_PATH"
+eval = "$PRJ_ROOT/api.js"
+
+[[env]]
+name = "API_GENSTUB_PATH"
+eval = "$PRJ_ROOT/frontend/src/genstub"
+
+[[commands]]
+package = "openapi-generator-cli"
+category = "openapi"
+
+[[commands]]
+name = "gen-ts"
+help = "generate typescript client"
+command = '''
+        rm -rf "$API_GENSTUB_PATH"
+        openapi-generator-cli generate -i "http://127.0.0.1:$SERVER_PORT/swagger.json" -g typescript-axios -o "$API_GENSTUB_PATH"
+        ''' 
+category = "openapi"
+

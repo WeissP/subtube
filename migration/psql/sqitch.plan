@@ -1,0 +1,5 @@
+%syntax-version=1.0.0
+%project=subtube
+
+appschema 2024-03-17T18:10:42Z weiss <weiss@weiss-desktop> # define subtube schema
+tables [appschema] 2024-03-17T18:18:56Z weiss <weiss@weiss-desktop> # create basic tables

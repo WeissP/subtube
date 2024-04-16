@@ -6,8 +6,14 @@ cradle:
     - path: "src"
       config: {cradle: {cabal: {component: "lib:subtube"}}}
 
-    - path: "app"
-      config: {cradle: {cabal: {component: "subtube:subtube-exe"}}}
+    # - path: "app"
+      # config: {cradle: {cabal: {component: "subtube:subtube-exe"}}}
+
+    # - path: "generator"
+      # config: {cradle: {cabal: {component: "subtube:subtube-gen"}}}
+
+    - path: "api"
+      config: {cradle: {cabal: {component: "subtube:subtube-api-server"}}}
 
     - path: "test"
       config: {cradle: {cabal: {component: "subtube:subtube-test"}}}

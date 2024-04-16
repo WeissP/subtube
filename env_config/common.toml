@@ -1,0 +1,79 @@
+imports = ["postgres.nix"]
+
+[services.postgres]
+package = "pkgs.postgresql_15"
+setupPostgresOnStartup = true
+listenAddresses = "*"
+
+[[env]]
+name = "SERVER_PORT"
+value = "9892"
+
+[[env]]
+name = "INVIDIOUS_ROOT"
+value = "https://invidious.jing.rocks/api/"
+
+[[env]]
+name = "INVIDIOUS_ROOT_FALLBACK"
+value = "https://yewtu.be/api/"
+
+[[env]]
+name = "DBNAME"
+value = "subtube"
+
+[[env]]
+name = "PGPORT"
+value = "9891"
+
+[[env]]
+name = "ST_PGHOST"
+value = "localhost"
+
+[[env]]
+name = "PGUSER"
+eval = "${USER:-$(id -nu)}"
+
+[[env]]
+name = "PSQL_URL"
+eval = "postgresql://${ST_PGHOST}:${PGPORT}/${DBNAME}"
+
+[[env]]
+name = "PSQL_MOCK_URL"
+eval = "postgresql://${ST_PGHOST}:${PGPORT}/${DBNAME}_mock"
+
+[[env]]
+name = "ST_DATABASE_MIGRATION_DIR"
+value = "psql"
+
+[[env]]
+name = "ST_DATABASE_MIGRATION_MOCK_DIR"
+eval = 'mockdata/db'
+
+[[commands]]
+name = "setup-db"
+command = '''
+createdb -E UTF8 -T template0 -h $PGDATA -p $PGPORT $DBNAME
+createdb -E UTF8 -T template0 -h $PGDATA -p $PGPORT ${DBNAME}_mock
+pushd $PRJ_ROOT/migration/psql
+sqitch deploy dev
+sqitch deploy mock
+          '''
+category = "DB"
+
+[[commands]]
+name = "reset-db"
+command = '''
+rm -rf $PGDATA
+setup-postgres
+postgres
+          '''   
+category = "DB"
+
+[[commands]]
+name = "rebase-mock-db"
+command = '''
+pushd $PRJ_ROOT/migration/psql
+yes | sqitch rebase mock
+          '''   
+category = "DB"
+

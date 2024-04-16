@@ -7,7 +7,7 @@ license-file:    LICENSE
 author:          weiss
 maintainer:      weiss <kingbaiing@163.com>
 copyright:       2024 weiss
-tested-with:     GHC ==8.6.5 || ==8.8.3 || ==8.10.7 || ==9.0.2 || ==9.2.2
+tested-with:     GHC ==9.4.8
 extra-doc-files:
   CHANGELOG.md
   README.md
@@ -21,13 +21,16 @@ extra-doc-files:
 --   location: git://github.com/FIXME/subtube.git
 
 common common-options
-  build-depends:    base >=4.9 && <5
-  default-language: Haskell2010
+  build-depends:      base
+  default-language:   Haskell2010
   default-extensions:
     ApplicativeDo
     BangPatterns
+    BlockArguments
     ConstraintKinds
     DataKinds
+    DefaultSignatures
+    DeriveAnyClass
     DeriveDataTypeable
     DeriveFoldable
     DeriveFunctor
@@ -36,6 +39,8 @@ common common-options
     DeriveTraversable
     DerivingStrategies
     DerivingVia
+    DisambiguateRecordFields
+    DuplicateRecordFields
     EmptyCase
     EmptyDataDecls
     EmptyDataDeriving
@@ -43,11 +48,13 @@ common common-options
     ExplicitForAll
     FlexibleContexts
     FlexibleInstances
+    FunctionalDependencies
     GADTSyntax
     GeneralisedNewtypeDeriving
     ImportQualifiedPost
     KindSignatures
     LambdaCase
+    MonadComprehensions
     MultiParamTypeClasses
     MultiWayIf
     NoImplicitPrelude
@@ -68,6 +75,7 @@ common common-options
     TypeFamilies
     TypeOperators
     ViewPatterns
+
   ghc-options:
     -Wall -Wcompat -Widentities -Wincomplete-uni-patterns
     -Wincomplete-record-updates -Wredundant-constraints
@@ -77,33 +85,125 @@ library
   import:          common-options
   hs-source-dirs:  src
   build-depends:
+    , aeson
+    , bytestring
     , containers
-    , mtl
+    , contravariant
+    , data-default
+    , exceptions
+    , hasql               >=1.6.4.0
+    , hasql-transaction
+    , http-api-data
+    , http-client
+    , js-jquery
     , lens
+    , mtl
+    , random
+    , rel8                >=1.5.0
     , rio
+    , semigroupoids
+    , servant-docs
+    , servant-js
+    , servant-server
+    , servant-swagger
+    , servant-swagger-ui
+    , static-text
+    , swagger2
     , transformers
-  exposed-modules:
-    MyPrelude
+    , unix-time
+    , uuid
+    , validity
+    , validity-text
+    , validity-uuid
+    , wai
+    , warp
+    , wreq
 
-executable subtube-exe
+  exposed-modules:
+    Api
+    Api.Docs
+    Api.Tag
+    Api.Utils
+    Api.Youtube
+    Db
+    Db.Command
+    Db.Queries
+    Invidious.Client
+    Invidious.Parser
+    MyPrelude
+    Repl
+    Types
+    Types.AggMedia
+    Types.Cached
+    Types.Env
+    Types.General
+    Types.Media
+    Types.Schemas
+    Types.SessionPool
+    Types.TagMember
+    Types.Utils
+    Types.Youtube
+
+-- executable subtube-exe
+--   import:         common-options
+--   hs-source-dirs: app
+--   main-is:        Main.hs
+--   build-depends:  subtube
+--   ghc-options:    -threaded -rtsopts -with-rtsopts=-N
+
+executable subtube-api-server
   import:         common-options
-  hs-source-dirs: app
+  hs-source-dirs: api
   main-is:        Main.hs
-  build-depends:  subtube
   ghc-options:    -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+    , aeson
+    , rio
+    , servant-docs
+    , servant-js
+    , servant-server
+    , servant-swagger
+    , servant-swagger-ui
+    , subtube
+    , swagger2
+    , unix-time
+    , wai                 >=3.2.3
+    , warp                >=3.3.25
 
 test-suite subtube-test
-  import:         common-options
-  type:           exitcode-stdio-1.0
-  hs-source-dirs: test
-  main-is:        Spec.hs
-  build-depends:
-    , hspec
-    , HUnit
-    , subtube
-    , QuickCheck
+  import:             common-options
+  type:               exitcode-stdio-1.0
+  hs-source-dirs:     test
+  main-is:            Main.hs
+  other-modules:
+    Gen.GenIns
+    Gen.GenSpec
+    Gen.Spec
+    Psql.PsqlSpec
+    Psql.Spec
+    TestEnv
 
-  ghc-options:    -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+    , genvalidity
+    , genvalidity-aeson
+    , genvalidity-containers
+    , genvalidity-sydtest
+    , genvalidity-text
+    , genvalidity-uuid
+    , hasql                   >=1.6.4.0
+    , hasql-transaction
+    , QuickCheck
+    , quickcheck-text
+    , rel8                    >=1.5.0
+    , rio
+    , static-text
+    , subtube
+    , sydtest
+    , unliftio
+    , uuid
+
+  build-tool-depends: sydtest-discover:sydtest-discover >=0.0.0.3
+  ghc-options:        -threaded -rtsopts -with-rtsopts=-N
 
 benchmark subtube-bench
   import:         common-options
