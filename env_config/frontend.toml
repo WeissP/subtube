@@ -1,8 +1,4 @@
 [[env]]
-name = "API_SPEC_PATH"
-eval = "$PRJ_ROOT/api.js"
-
-[[env]]
 name = "API_GENSTUB_PATH"
 eval = "$PRJ_ROOT/frontend/src/genstub"
 
