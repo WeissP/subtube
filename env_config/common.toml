@@ -77,3 +77,9 @@ yes | sqitch rebase mock
           '''   
 category = "DB"
 
+[serviceGroups.svr]
+description = "server and database"
+[serviceGroups.svr.services.database]
+command = "postgres"
+[serviceGroups.svr.services.server]
+command = "cabal run subtube-api-server"
