@@ -226,7 +226,7 @@ instance Insertable TagEntry TagPost where
 instance Upsertable TagEntry where
   upsertInfo =
     Upsert
-      { index = teID
+      { index = teName
       , predicate = Nothing
       , set = \new old -> new {teID = teID old}
       , updateWhere = \_ _ -> lit True
