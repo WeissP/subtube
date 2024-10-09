@@ -1,4 +1,5 @@
 imports = ["postgres.nix"]
+motd = ""
 
 [services.postgres]
 package = "pkgs.postgresql_15"
